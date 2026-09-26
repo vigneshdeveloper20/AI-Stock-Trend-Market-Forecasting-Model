@@ -1,0 +1,482 @@
+/* =========================================================
+   STOCK TREND AI — QUANTITATIVE ANALYTICS TERMINAL
+   Data-dense, professional financial UI (Koyfin / TradingView standard)
+   ========================================================= */
+
+:root {
+  --bg-app: #0D0F12;
+  --bg-surface: #141619;
+  --bg-surface-subtle: #191C21;
+  --bg-surface-hover: #1E2228;
+
+  --border-color: #23262B;
+  --border-active: #4A7DFF;
+
+  --text-primary: #E6E8EA;
+  --text-secondary: #9BA1A8;
+  --text-tertiary: #6B7178;
+
+  --accent: #4A7DFF;
+  --accent-subtle: rgba(74, 125, 255, 0.12);
+
+  --pos: #2E9E6B;
+  --neg: #D64545;
+  --neu: #9BA1A8;
+
+  --series-hist: #9BA1A8;
+  --series-forecast: #4A7DFF;
+  --series-sma20: #C99A2E;
+  --series-sma50: #7A6CC4;
+
+  --radius: 3px;
+  --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', 'IBM Plex Mono', monospace;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-ui);
+  background-color: var(--bg-app);
+  color: var(--text-primary);
+  font-size: 13px;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+  -webkit-font-smoothing: antialiased;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 52px Persistent Terminal Header */
+.terminal-header {
+  height: 52px;
+  background-color: var(--bg-surface);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.brand-label {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+
+.brand-badge {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--accent);
+  background: var(--accent-subtle);
+  border: 1px solid rgba(74, 125, 255, 0.25);
+  padding: 1px 6px;
+  border-radius: var(--radius);
+}
+
+.meta-divider {
+  width: 1px;
+  height: 18px;
+  background-color: var(--border-color);
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.meta-label {
+  color: var(--text-tertiary);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Compact Buttons */
+.btn-control {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--bg-surface-subtle);
+  border: 1px solid var(--border-color);
+  padding: 5px 10px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-control:hover {
+  background: var(--bg-surface-hover);
+  color: var(--text-primary);
+  border-color: #333842;
+}
+
+.btn-primary-action {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #FFFFFF;
+}
+
+.btn-primary-action:hover {
+  background: #3B6EE8;
+  border-color: #3B6EE8;
+  color: #FFFFFF;
+}
+
+/* Sample Dataset Switcher */
+.sample-btn-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: var(--bg-surface-subtle);
+  border: 1px solid var(--border-color);
+  padding: 2px 4px;
+  border-radius: var(--radius);
+}
+
+.sample-label {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0 4px;
+}
+
+.btn-sample {
+  border: none;
+  background: transparent;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+  border-radius: 2px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-sample:hover {
+  background: var(--bg-surface-hover);
+  color: var(--text-primary);
+}
+
+.btn-sample.active {
+  background: var(--accent);
+  color: #FFFFFF;
+  font-weight: 600;
+}
+
+/* Tab Navigation Strip */
+.nav-strip {
+  background-color: var(--bg-surface);
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  padding: 0 16px;
+  gap: 2px;
+}
+
+.nav-tab {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 9px 14px;
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.nav-tab:hover {
+  color: var(--text-primary);
+}
+
+.nav-tab.active {
+  color: var(--text-primary);
+  border-bottom-color: var(--accent);
+  font-weight: 600;
+}
+
+/* 5-Cell Border-Divided Metric Strip */
+.metric-strip {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  background-color: var(--bg-surface);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.metric-cell {
+  padding: 12px 16px;
+  border-right: 1px solid var(--border-color);
+}
+
+.metric-cell:last-child {
+  border-right: none;
+}
+
+.metric-label-terse {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-tertiary);
+  margin-bottom: 4px;
+}
+
+.metric-val-hero {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.metric-val-sub {
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.val-pos { color: var(--pos) !important; }
+.val-neg { color: var(--neg) !important; }
+.val-neu { color: var(--neu) !important; }
+
+/* Main Workspace Container */
+.workspace-container {
+  padding: 16px;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+/* Panel Containers */
+.terminal-panel {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+}
+
+.panel-header {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.panel-title {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.panel-body {
+  padding: 14px;
+}
+
+/* Chart Controls Bar */
+.chart-bar-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border-color);
+  background-color: var(--bg-surface-subtle);
+}
+
+.inline-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn-range, .btn-indicator {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 2px 8px;
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.btn-range:hover, .btn-indicator:hover {
+  color: var(--text-primary);
+  background: var(--bg-surface-hover);
+}
+
+.btn-range.active, .btn-indicator.active {
+  color: var(--accent);
+  background: var(--accent-subtle);
+  border-color: rgba(74, 125, 255, 0.3);
+  font-weight: 600;
+}
+
+.chart-stage-main {
+  height: 440px;
+  position: relative;
+  padding: 10px;
+}
+
+.chart-stage-sub {
+  height: 220px;
+  position: relative;
+  padding: 10px;
+}
+
+/* Signal Summary Table */
+.terminal-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.terminal-table th {
+  text-align: left;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-tertiary);
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border-color);
+  font-weight: 600;
+}
+
+.terminal-table td {
+  padding: 7px 10px;
+  border-bottom: 1px solid #1C1F24;
+  color: var(--text-secondary);
+  height: 32px;
+}
+
+.terminal-table tr:hover td {
+  background-color: var(--bg-surface-hover);
+}
+
+.text-right {
+  text-align: right;
+}
+
+/* Data Table (Historical tab) */
+.data-table-wrapper {
+  max-height: 520px;
+  overflow-y: auto;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.data-table thead th {
+  position: sticky;
+  top: 0;
+  background-color: var(--bg-surface-subtle);
+  color: var(--text-tertiary);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 7px 10px;
+  border-bottom: 1px solid var(--border-color);
+  z-index: 2;
+}
+
+.data-table tbody tr {
+  height: 28px;
+}
+
+.data-table tbody tr:nth-child(even) {
+  background-color: rgba(255, 255, 255, 0.015);
+}
+
+.data-table tbody tr:hover td {
+  background-color: var(--bg-surface-hover);
+  color: var(--text-primary);
+}
+
+.data-table td {
+  padding: 4px 10px;
+  border-bottom: 1px solid #1C1F24;
+  color: var(--text-secondary);
+}
+
+/* Evaluation Split Box */
+.eval-split-strip {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  background-color: var(--bg-surface-subtle);
+  border: 1px solid var(--border-color);
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  margin-bottom: 14px;
+}
+
+/* Skeleton Loading State */
+.skeleton-bar {
+  height: 18px;
+  background: #1C1F24;
+  border-radius: var(--radius);
+  animation: pulse-skeleton 1.2s infinite ease-in-out;
+}
+
+@keyframes pulse-skeleton {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+
+/* Persistent Disclaimer */
+.terminal-footer {
+  border-top: 1px solid var(--border-color);
+  padding: 14px 16px;
+  font-size: 11px;
+  color: var(--text-tertiary);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Responsive Grid */
+@media (max-width: 1024px) {
+  .metric-strip {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .chart-stage-main {
+    height: 340px;
+  }
+}

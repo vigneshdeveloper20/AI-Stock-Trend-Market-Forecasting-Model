@@ -1,0 +1,116 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html>
+<head>
+<title>Advanced Stock Analytics Dashboard</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body{background:#f4f6f9}
+.card{margin-bottom:20px}
+</style>
+</head>
+<body>
+<div class="container mt-4">
+<h2 class="text-center">Advanced Stock Prediction Dashboard</h2>
+
+<div class="row">
+<div class="col-md-3">
+<div class="card"><div class="card-body">
+<h6>Moving Average Trend</h6>
+<h4>{{trend}}</h4>
+</div></div>
+</div>
+
+<div class="col-md-3">
+<div class="card"><div class="card-body">
+<h6>Volatility Index</h6>
+<h4>{{volatility}}</h4>
+</div></div>
+</div>
+
+<div class="col-md-3">
+<div class="card"><div class="card-body">
+<h6>AI Future Signal</h6>
+<h4>{{signal}}</h4>
+</div></div>
+</div>
+
+<div class="col-md-3">
+<div class="card"><div class="card-body">
+<h6>Trading Advice</h6>
+<h4>{{advice}}</h4>
+</div></div>
+</div>
+</div>
+
+<div class="row">
+<div class="col-md-6">
+<div class="card">
+<div class="card-header">Actual vs Predicted</div>
+<div class="card-body">
+<img src="/static/combined.png" class="img-fluid">
+</div>
+</div>
+</div>
+
+<div class="col-md-6">
+<div class="card">
+<div class="card-header">Actual Price</div>
+<div class="card-body">
+<img src="/static/actual.png" class="img-fluid">
+</div>
+</div>
+</div>
+</div>
+
+<div class="row">
+<div class="col-md-6">
+<div class="card">
+<div class="card-header">Predicted Price</div>
+<div class="card-body">
+<img src="/static/predicted.png" class="img-fluid">
+</div>
+</div>
+</div>
+
+<div class="col-md-6">
+<div class="card">
+<div class="card-header">Data Distribution</div>
+<div class="card-body">
+<img src="/static/distribution.png" class="img-fluid">
+</div>
+</div>
+</div>
+</div>
+
+<div class="row">
+<div class="col-md-6">
+<div class="card">
+<div class="card-header">High vs Low Price</div>
+<div class="card-body">
+<img src="/static/highlow.png" class="img-fluid">
+</div>
+</div>
+</div>
+
+<div class="col-md-6">
+<div class="card">
+<div class="card-header">Outlier Analysis</div>
+<div class="card-body">
+<img src="/static/outliers.png" class="img-fluid">
+</div>
+</div>
+</div>
+</div>
+
+<div class="card">
+<div class="card-header">Dataset Preview</div>
+<div class="card-body">
+{{table|safe}}
+</div>
+</div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stock Trend AI — Quantitative Market Forecasting & Analytics Terminal</title>
+  
+  <!-- Inter & JetBrains Mono Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Bootstrap Grid -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  
+  <!-- Chart.js 4.4 -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+  <!-- Hidden File Input -->
+  <input type="file" id="csvFileInput" accept=".csv" style="display: none;">
+
+  <!-- 52px Persistent Terminal Header -->
+  <header class="terminal-header">
+    <div class="header-left">
+      <div class="brand-label">Stock Trend AI</div>
+      <span class="brand-badge">QUANT TERMINAL v3.0</span>
+      <div class="meta-divider"></div>
+      <div class="meta-item">
+        <span class="meta-label">Ticker:</span>
+        <strong id="hdrTicker" class="mono text-light">AAPL</strong>
+      </div>
+      <div class="meta-divider"></div>
+      <div class="meta-item d-none d-md-flex">
+        <span class="meta-label">Dataset:</span>
+        <span id="hdrRange" class="mono">2015-05-27 to 2020-05-22 (1258 bars)</span>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button id="btnUploadCsv" class="btn-control btn-primary-action">
+        Upload CSV
+      </button>
+      <div class="sample-btn-group">
+        <span class="sample-label">Sample:</span>
+        <button class="btn-control btn-sample active" data-ticker="AAPL">AAPL</button>
+        <button class="btn-control btn-sample" data-ticker="MSFT">MSFT</button>
+        <button class="btn-control btn-sample" data-ticker="TSLA">TSLA</button>
+      </div>
+      <button id="btnExport" class="btn-control d-none d-sm-inline-flex">
+        Export Data
+      </button>
+    </div>
+  </header>
+
+  <!-- Metric Strip (5 border-divided cells) -->
+  <section class="metric-strip">
+    <div class="metric-cell">
+      <div class="metric-label-terse">Last Close (<span id="stripDate">2020-05-22</span>)</div>
+      <div id="stripLastClose" class="metric-val-hero mono">$318.89</div>
+      <div id="strip1DChange" class="metric-val-sub mono val-pos">+0.64% 1D</div>
+    </div>
+    <div class="metric-cell">
+      <div class="metric-label-terse">1D Forecast (RF Model)</div>
+      <div id="strip1DForecast" class="metric-val-hero mono">$317.84</div>
+      <div id="strip1DDelta" class="metric-val-sub mono val-neg">-0.33% Expected</div>
+    </div>
+    <div class="metric-cell">
+      <div class="metric-label-terse">Composite Quantitative Signal</div>
+      <div id="stripSignal" class="metric-val-hero val-neu">Neutral</div>
+      <div id="stripScore" class="metric-val-sub mono">Score: 0 / 100</div>
+    </div>
+    <div class="metric-cell">
+      <div class="metric-label-terse">14D RSI & Momentum</div>
+      <div id="stripRsi" class="metric-val-hero mono">74.5</div>
+      <div id="stripRsiState" class="metric-val-sub val-neg">Overbought Warning</div>
+    </div>
+    <div class="metric-cell">
+      <div class="metric-label-terse">Linear Slope & Volatility</div>
+      <div id="stripLinSlope" class="metric-val-hero mono">+0.142 /d</div>
+      <div id="stripVol" class="metric-val-sub mono">Ann. Vol: 23.2% | ATR: $7.82</div>
+    </div>
+  </section>
+
+  <!-- Tab Strip Navigation -->
+  <nav class="nav-strip">
+    <button class="nav-tab active" data-tab="tab-overview">Overview</button>
+    <button class="nav-tab" data-tab="tab-forecasting">Forecasting & Linear Reg</button>
+    <button class="nav-tab" data-tab="tab-validation">Model Validation & Backtest</button>
+    <button class="nav-tab" data-tab="tab-distribution">Distribution & Risk</button>
+    <button class="nav-tab" data-tab="tab-technicals">Technical Oscillators</button>
+    <button class="nav-tab" data-tab="tab-data">Historical Data</button>
+  </nav>
+
+  <!-- Workspace Container -->
+  <main class="workspace-container">
+
+    <!-- Alert Banner -->
+    <div id="alertBox" style="display: none; margin-bottom: 16px; padding: 10px 14px; background: rgba(214, 69, 69, 0.1); border: 1px solid var(--neg); color: #FFA3A3; font-size: 12px; border-radius: var(--radius);"></div>
+
+    <!-- TAB 1: OVERVIEW -->
+    <div id="tab-overview" class="tab-pane active">
+      <div class="row g-3">
+        
+        <!-- Main Price & Forecast Chart (8 Columns) -->
+        <div class="col-lg-8">
+          <div class="terminal-panel">
+            <div class="chart-bar-controls">
+              <div class="inline-group">
+                <span class="meta-label me-1">Range:</span>
+                <button class="btn-range active" data-range="3M">3M</button>
+                <button class="btn-range" data-range="6M">6M</button>
+                <button class="btn-range" data-range="1Y">1Y</button>
+                <button class="btn-range" data-range="MAX">MAX</button>
+              </div>
+              <div class="inline-group">
+                <span class="meta-label me-1">Overlays:</span>
+                <button id="toggleSma20" class="btn-indicator active">SMA 20</button>
+                <button id="toggleSma50" class="btn-indicator active">SMA 50</button>
+                <button id="toggleLinReg" class="btn-indicator">Linear Trend</button>
+                <button id="toggleBb" class="btn-indicator active">Bollinger</button>
+              </div>
+            </div>
+            <div class="chart-stage-main">
+              <canvas id="mainChartCanvas"></canvas>
+            </div>
+          </div>
+
+          <!-- Key Support / Resistance Levels (Fibonacci & Pivots) -->
+          <div class="row g-3 mt-1">
+            <div class="col-md-6">
+              <div class="terminal-panel">
+                <div class="panel-header">
+                  <div class="panel-title">Fibonacci Retracement (52-Week Range)</div>
+                  <span id="fib52Range" class="mono text-secondary" style="font-size: 11px;">$0.00 - $0.00</span>
+                </div>
+                <div style="padding: 0;">
+                  <table class="terminal-table">
+                    <thead>
+                      <tr>
+                        <th>Ratio</th>
+                        <th>Price Level</th>
+                        <th class="text-right">Distance to Close</th>
+                      </tr>
+                    </thead>
+                    <tbody id="fibTableBody">
+                      <!-- Populated via JS -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="terminal-panel">
+                <div class="panel-header">
+                  <div class="panel-title">Classic Floor Trader Pivots</div>
+                  <span class="mono text-secondary" style="font-size: 11px;">Latest Bar</span>
+                </div>
+                <div style="padding: 0;">
+                  <table class="terminal-table">
+                    <thead>
+                      <tr>
+                        <th>Level</th>
+                        <th>Price</th>
+                        <th class="text-right">Classification</th>
+                      </tr>
+                    </thead>
+                    <tbody id="pivotsTableBody">
+                      <!-- Populated via JS -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Signal Summary Matrix & Volatility Panel (4 Columns) -->
+        <div class="col-lg-4">
+          
+          <!-- Signal Breakdown Table -->
+          <div class="terminal-panel mb-3">
+            <div class="panel-header">
+              <div class="panel-title">Signal Matrix & Component Weights</div>
+              <span id="signalMatrixBadge" class="mono text-secondary" style="font-size: 11px;">Score: 0</span>
+            </div>
+            <div style="padding: 0;">
+              <table class="terminal-table">
+                <thead>
+                  <tr>
+                    <th>Signal Component</th>
+                    <th>Observed</th>
+                    <th>State</th>
+                    <th class="text-right">Weight</th>
+                  </tr>
+                </thead>
+                <tbody id="signalTableBody">
+                  <!-- Populated via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Forecast Horizon Summary -->
+          <div class="terminal-panel mb-3">
+            <div class="panel-header">
+              <div class="panel-title">Multi-Horizon Projections (RF Model)</div>
+            </div>
+            <div style="padding: 0;">
+              <table class="terminal-table">
+                <thead>
+                  <tr>
+                    <th>Horizon</th>
+                    <th>Projected</th>
+                    <th>Expected Move</th>
+                    <th class="text-right">95% Interval</th>
+                  </tr>
+                </thead>
+                <tbody id="forecastTableBody">
+                  <!-- Populated via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Volatility & Risk Profile -->
+          <div class="terminal-panel">
+            <div class="panel-header">
+              <div class="panel-title">Volatility & Dynamic Risk Buffer</div>
+            </div>
+            <div class="panel-body">
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-secondary">14-Day Average True Range (ATR):</span>
+                <span id="riskAtrVal" class="mono text-light">$0.00 (0.0%)</span>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-secondary">Upper Volatility Buffer (+1.5 ATR):</span>
+                <span id="riskUpperBuff" class="mono val-pos">$0.00</span>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-secondary">Lower Volatility Buffer (-1.5 ATR):</span>
+                <span id="riskLowerBuff" class="mono val-neg">$0.00</span>
+              </div>
+              <div class="d-flex justify-content-between">
+                <span class="text-secondary">52-Week Range Position:</span>
+                <span id="risk52wPos" class="mono text-light">0.0%</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: FORECASTING & LINEAR REGRESSION -->
+    <div id="tab-forecasting" class="tab-pane" style="display: none;">
+      <div class="row g-3">
+        
+        <!-- OLS Linear Regression Parameter Breakdown -->
+        <div class="col-lg-5">
+          <div class="terminal-panel mb-3">
+            <div class="panel-header">
+              <div class="panel-title">Time-Series OLS Linear Regression</div>
+              <span id="linRegR2Badge" class="mono text-secondary" style="font-size: 11px;">R2: 0.0000</span>
+            </div>
+            <div class="panel-body">
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-secondary">Regression Slope (&beta;):</span>
+                <span id="linSlopeVal" class="mono text-light">+0.0000 / bar</span>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-secondary">Y-Intercept (&alpha;):</span>
+                <span id="linInterceptVal" class="mono text-light">$0.00</span>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-secondary">Standard Error of Estimate (Se):</span>
+                <span id="linStdErrVal" class="mono text-light">&plusmn;$0.00</span>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-secondary">Annualized Linear Trend Rate:</span>
+                <span id="linAnnualTrendVal" class="mono val-pos">+0.00% / yr</span>
+              </div>
+              <div class="d-flex justify-content-between">
+                <span class="text-secondary">Trend Classification:</span>
+                <span id="linTrendDirVal" class="mono text-light">Upward</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Multi-Horizon Comparison (Random Forest vs Linear Regression) -->
+          <div class="terminal-panel mb-3">
+            <div class="panel-header">
+              <div class="panel-title">Forward Horizon Comparison: ML vs Linear Model</div>
+            </div>
+            <div style="padding: 0;">
+              <table class="terminal-table">
+                <thead>
+                  <tr>
+                    <th>Horizon</th>
+                    <th>Random Forest</th>
+                    <th>Linear Regression</th>
+                    <th class="text-right">Model Divergence</th>
+                  </tr>
+                </thead>
+                <tbody id="multiModelHorizonTableBody">
+                  <!-- Populated via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Monte Carlo 60-Day Scenario Fan -->
+          <div class="terminal-panel">
+            <div class="panel-header">
+              <div class="panel-title">60-Day Monte Carlo Scenario Range (500 Paths)</div>
+            </div>
+            <div class="panel-body">
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-secondary">P10 (Severe Bearish Scenario):</span>
+                <span id="mcP10Val" class="mono val-neg">$0.00</span>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-secondary">P25 (Conservative Downside):</span>
+                <span id="mcP25Val" class="mono text-secondary">$0.00</span>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-secondary">P50 (Median Trajectory):</span>
+                <span id="mcP50Val" class="mono text-light">$0.00</span>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-secondary">P75 (Moderate Expansion):</span>
+                <span id="mcP75Val" class="mono text-secondary">$0.00</span>
+              </div>
+              <div class="d-flex justify-content-between">
+                <span class="text-secondary">P90 (Strong Bullish Scenario):</span>
+                <span id="mcP90Val" class="mono val-pos">$0.00</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Linear Regression & Multi-Model Forecast Chart -->
+        <div class="col-lg-7">
+          <div class="terminal-panel">
+            <div class="panel-header">
+              <div class="panel-title">Linear Regression Trend Channels & Forward Extension</div>
+            </div>
+            <div class="chart-stage-main">
+              <canvas id="forecastDeepChartCanvas"></canvas>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TAB 3: MODEL VALIDATION & BACKTEST -->
+    <div id="tab-validation" class="tab-pane" style="display: none;">
+      
+      <!-- Walk-forward partition information -->
+      <div class="eval-split-strip">
+        <div>
+          <span class="meta-label">Evaluation Methodology:</span>
+          <div class="mono text-light">Walk-Forward Out-of-Sample Split</div>
+        </div>
+        <div>
+          <span class="meta-label">Training Window:</span>
+          <div id="evalTrainRange" class="mono text-light">2015-05-27 to 2019-05-24 (1006 obs)</div>
+        </div>
+        <div>
+          <span class="meta-label">Held-Out Test Window:</span>
+          <div id="evalTestRange" class="mono text-light">2019-05-28 to 2020-05-22 (252 obs)</div>
+        </div>
+        <div>
+          <span class="meta-label">Naive Baseline:</span>
+          <div class="mono text-light">Persistence Benchmark (t-1 Close)</div>
+        </div>
+      </div>
+
+      <div class="row g-3">
+        <!-- Multi-Model Comparison Table -->
+        <div class="col-lg-12">
+          <div class="terminal-panel mb-3">
+            <div class="panel-header">
+              <div class="panel-title">Multi-Model Walk-Forward Out-of-Sample Validation Matrix</div>
+            </div>
+            <div style="padding: 0;">
+              <table class="terminal-table">
+                <thead>
+                  <tr>
+                    <th>Model Architecture</th>
+                    <th>Model Category</th>
+                    <th class="text-right">MAE ($)</th>
+                    <th class="text-right">RMSE ($)</th>
+                    <th class="text-right">MAPE (%)</th>
+                    <th class="text-right">Directional Acc (%)</th>
+                    <th class="text-right">R2 Score</th>
+                    <th class="text-right">Delta vs Baseline</th>
+                  </tr>
+                </thead>
+                <tbody id="evalMultiModelTableBody">
+                  <!-- Populated via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Full Test Window Time-Series Chart -->
+        <div class="col-lg-12">
+          <div class="terminal-panel">
+            <div class="panel-header">
+              <div class="panel-title">Walk-Forward Test Window: Actual vs Multi-Model Predictions</div>
+            </div>
+            <div class="chart-stage-main">
+              <canvas id="evalChartCanvas"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: DISTRIBUTION & RISK -->
+    <div id="tab-distribution" class="tab-pane" style="display: none;">
+      <div class="row g-3">
+        
+        <!-- Return Distribution Histogram vs Fitted Normal -->
+        <div class="col-lg-7">
+          <div class="terminal-panel mb-3">
+            <div class="panel-header">
+              <div class="panel-title">Empirical Return Distribution vs Theoretical Normal Distribution</div>
+            </div>
+            <div class="chart-stage-main">
+              <canvas id="distChartCanvas"></canvas>
+            </div>
+          </div>
+
+          <!-- Historical Cumulative Return & Drawdown Chart -->
+          <div class="terminal-panel">
+            <div class="panel-header">
+              <div class="panel-title">Historical Drawdown Profile (% from High)</div>
+            </div>
+            <div class="chart-stage-sub">
+              <canvas id="drawdownChartCanvas"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Distribution & Risk Statistics -->
+        <div class="col-lg-5">
+          <div class="terminal-panel mb-3">
+            <div class="panel-header">
+              <div class="panel-title">Return Distribution Statistics & Moments</div>
+            </div>
+            <div class="panel-body">
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-secondary">Mean Daily Return:</span>
+                <span id="distMeanRet" class="mono text-light">0.000%</span>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-secondary">Median Daily Return:</span>
+                <span id="distMedianRet" class="mono text-light">0.000%</span>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-secondary">Daily Standard Deviation:</span>
+                <span id="distStdRet" class="mono text-light">0.000%</span>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-secondary">Annualized Volatility (&sigma; &radic;252):</span>
+                <span id="distAnnVol" class="mono text-light">0.00%</span>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-secondary">Skewness (Asymmetry):</span>
+                <span id="distSkew" class="mono text-light">0.000</span>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-secondary">Excess Kurtosis (Tail Thickness):</span>
+                <span id="distKurt" class="mono text-light">0.000</span>
+              </div>
+              <div class="d-flex justify-content-between">
+                <span class="text-secondary">Positive Trading Days / Win Rate:</span>
+                <span id="distWinRate" class="mono val-pos">0.0% (0 / 0)</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="terminal-panel">
+            <div class="panel-header">
+              <div class="panel-title">Parametric & Historical Risk Metrics</div>
+            </div>
+            <div class="panel-body">
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-secondary">Daily Value at Risk (VaR 95%):</span>
+                <span id="riskVar95" class="mono val-neg">-0.00%</span>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-secondary">Daily Value at Risk (VaR 99%):</span>
+                <span id="riskVar99" class="mono val-neg">-0.00%</span>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-secondary">Conditional VaR (CVaR / Expected Shortfall 95%):</span>
+                <span id="riskCvar95" class="mono val-neg">-0.00%</span>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-secondary">Maximum Historical Daily Gain:</span>
+                <span id="distMaxGain" class="mono val-pos">+0.00%</span>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-secondary">Maximum Historical Daily Loss:</span>
+                <span id="distMaxLoss" class="mono val-neg">-0.00%</span>
+              </div>
+              <div class="d-flex justify-content-between mb-2">
+                <span class="text-secondary">Maximum Historical Drawdown (MDD):</span>
+                <span id="distMaxDd" class="mono val-neg">-0.00%</span>
+              </div>
+              <div class="d-flex justify-content-between">
+                <span class="text-secondary">MDD Trough Date:</span>
+                <span id="distMaxDdDate" class="mono text-light">N/A</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TAB 5: TECHNICAL OSCILLATORS -->
+    <div id="tab-technicals" class="tab-pane" style="display: none;">
+      <div class="row g-3">
+        <div class="col-12">
+          <div class="terminal-panel">
+            <div class="panel-header">
+              <div class="panel-title">14-Period Relative Strength Index (RSI)</div>
+              <span id="technicalsRsiVal" class="mono text-secondary">RSI: 74.5</span>
+            </div>
+            <div class="chart-stage-sub">
+              <canvas id="rsiChartCanvas"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="col-12">
+          <div class="terminal-panel">
+            <div class="panel-header">
+              <div class="panel-title">MACD (12, 26, 9) Oscillator & Momentum Histogram</div>
+            </div>
+            <div class="chart-stage-sub">
+              <canvas id="macdChartCanvas"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 6: HISTORICAL DATA TABLE -->
+    <div id="tab-data" class="tab-pane" style="display: none;">
+      <div class="terminal-panel">
+        <div class="panel-header">
+          <div class="panel-title">Historical Observations & Technical Series</div>
+          <span id="dataRowCount" class="mono text-secondary">Showing latest 100 records</span>
+        </div>
+        <div class="data-table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th class="text-right">Open</th>
+                <th class="text-right">High</th>
+                <th class="text-right">Low</th>
+                <th class="text-right">Close</th>
+                <th class="text-right">Volume</th>
+              </tr>
+            </thead>
+            <tbody id="dataTableBody">
+              <!-- Populated via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Persistent Terminal Footer -->
+  <footer class="terminal-footer">
+    <div>Stock Trend AI &bull; Quantitative Forecasting System</div>
+    <div>For quantitative research and educational evaluation only. Not financial or investment advice.</div>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
+
